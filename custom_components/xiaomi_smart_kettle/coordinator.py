@@ -93,30 +93,36 @@ class KettleCoordinator(DataUpdateCoordinator[dict[str, object]]):
     async def async_start_heat(self) -> None:
         target = int(self.data.get("target_temperature", 80))
         keep_warm = bool(self.data.get("auto_keep_warm", True))
-        keep_temp = int(self.data.get("keep_warm_temperature", target))
+        keep_temp = int(self.data.get("keep_warm_temperature", 45))
         keep_time = int(self.data.get("keep_warm_time", 1440))
         mode = f"{target},{1 if keep_warm else 0},{keep_temp},{keep_time}"
         await self.hass.async_add_executor_job(
             self._set_properties_sync,
             [
-                {"siid": 3, "piid": 12, "value": mode},
+                {"siid": 2, "piid": 4, "value": target},
+                {"siid": 2, "piid": 5, "value": keep_warm},
+                {"siid": 2, "piid": 6, "value": keep_temp},
+                {"siid": 3, "piid": 1, "value": keep_time},
                 {"siid": 3, "piid": 11, "value": 0},
-                {"siid": 2, "piid": 7, "value": True},
+                {"siid": 3, "piid": 12, "value": mode},
             ],
         )
         await self.async_request_refresh()
 
     async def async_start_boil(self) -> None:
         keep_warm = bool(self.data.get("auto_keep_warm", True))
-        keep_temp = int(self.data.get("keep_warm_temperature", 40))
+        keep_temp = int(self.data.get("keep_warm_temperature", 45))
         keep_time = int(self.data.get("keep_warm_time", 1440))
         mode = f"99,{1 if keep_warm else 0},{keep_temp},{keep_time}"
         await self.hass.async_add_executor_job(
             self._set_properties_sync,
             [
-                {"siid": 3, "piid": 13, "value": mode},
+                {"siid": 2, "piid": 4, "value": 99},
+                {"siid": 2, "piid": 5, "value": keep_warm},
+                {"siid": 2, "piid": 6, "value": keep_temp},
+                {"siid": 3, "piid": 1, "value": keep_time},
                 {"siid": 3, "piid": 11, "value": 1},
-                {"siid": 2, "piid": 7, "value": True},
+                {"siid": 3, "piid": 13, "value": mode},
             ],
         )
         await self.async_request_refresh()
