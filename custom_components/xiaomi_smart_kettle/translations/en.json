@@ -1,4 +1,78 @@
 {
-  "config": {"step": {"user": {"title": "Xiaomi Smart Kettle 2 Pro", "description": "Enter the local IP address and Xiaomi miIO token.", "data": {"host": "IP address", "token": "Token"}}}, "error": {"cannot_connect": "Cannot connect to the kettle. Check IP address and token.", "unsupported_model": "The device responded, but it is not xiaomi.kettle.v20."}},
-  "entity": {"sensor": {"temperature": {"name": "Water temperature"}, "status": {"name": "Status"}, "fault": {"name": "Fault"}, "warming_time": {"name": "Warming time"}}, "binary_sensor": {"kettle_lifting": {"name": "Kettle lifted"}}, "switch": {"auto_keep_warm": {"name": "Keep warm"}, "lift_remember_temp": {"name": "Remember temperature after lifting"}, "boiling_reminder": {"name": "Boiling reminder"}, "keep_warm_reminder": {"name": "Keep-warm reminder"}, "no_disturb": {"name": "Do not disturb"}}, "number": {"target_temperature": {"name": "Target temperature"}, "keep_warm_temperature": {"name": "Keep-warm temperature"}, "keep_warm_time": {"name": "Keep-warm time"}}, "button": {"stop": {"name": "Stop"}}}
+  "config": {
+    "step": {
+      "user": {
+        "title": "Xiaomi Smart Kettle 2 Pro",
+        "description": "Enter the local IP address and Xiaomi miIO token.",
+        "data": {
+          "host": "IP address",
+          "token": "Token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the kettle. Check IP address and token.",
+      "unsupported_model": "The device responded, but it is not xiaomi.kettle.v20."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Water temperature"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "fault": {
+        "name": "Fault"
+      },
+      "warming_time": {
+        "name": "Warming time"
+      }
+    },
+    "binary_sensor": {
+      "kettle_lifting": {
+        "name": "Kettle lifted"
+      }
+    },
+    "switch": {
+      "auto_keep_warm": {
+        "name": "Keep warm"
+      },
+      "lift_remember_temp": {
+        "name": "Remember temperature after lifting"
+      },
+      "boiling_reminder": {
+        "name": "Boiling reminder"
+      },
+      "keep_warm_reminder": {
+        "name": "Keep-warm reminder"
+      },
+      "no_disturb": {
+        "name": "Do not disturb"
+      }
+    },
+    "number": {
+      "target_temperature": {
+        "name": "Target temperature"
+      },
+      "keep_warm_temperature": {
+        "name": "Keep-warm temperature"
+      },
+      "keep_warm_time": {
+        "name": "Keep-warm time"
+      }
+    },
+    "button": {
+      "heat": {
+        "name": "Heat"
+      },
+      "boil": {
+        "name": "Boil"
+      },
+      "stop": {
+        "name": "Stop"
+      }
+    }
+  }
 }
