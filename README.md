@@ -2,6 +2,10 @@
 
 Local Home Assistant integration for `xiaomi.kettle.v20`.
 
+## v0.2.2
+
+- Added integration icon for Home Assistant.
+
 ## v0.2.1
 
 - Fixed Heat and Boil controls by sending all required MIoT properties in a single `set_properties` request.
