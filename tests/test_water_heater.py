@@ -81,6 +81,33 @@ async def test_set_temperature_sets_heat_target(
     )
 
 
+@pytest.mark.parametrize("status", [1, 2, 3, 4])
+async def test_set_temperature_while_on_heats_to_it(
+    hass: HomeAssistant, device: FakeKettle, setup_integration, status: int
+) -> None:
+    device.state[(2, 1)] = status
+    await setup_integration.runtime_data.async_refresh()
+
+    await _call(hass, SERVICE_SET_TEMPERATURE, {ATTR_TEMPERATURE: 69.5})
+
+    [payload] = device.sent("set_properties")
+    assert payload[-1] == {"did": "3-12", "siid": 3, "piid": 12, "value": "70,1,50,720"}
+    assert device.state[(2, 4)] == 70
+    assert hass.states.get(ENTITY_ID).attributes["temperature"] == 70
+
+
+async def test_set_temperature_with_unknown_status_only_stores(
+    hass: HomeAssistant, device: FakeKettle, setup_integration
+) -> None:
+    device.state[(2, 1)] = 9
+    await setup_integration.runtime_data.async_refresh()
+
+    await _call(hass, SERVICE_SET_TEMPERATURE, {ATTR_TEMPERATURE: 70})
+
+    assert device.sent("set_properties") == []
+    assert hass.states.get(ENTITY_ID).attributes["temperature"] == 70
+
+
 async def test_target_survives_boil(hass: HomeAssistant, device: FakeKettle) -> None:
     await hass.services.async_call(
         "button",
