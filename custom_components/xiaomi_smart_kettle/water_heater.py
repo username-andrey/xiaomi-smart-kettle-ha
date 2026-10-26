@@ -87,16 +87,19 @@ class KettleHeatWaterHeater(KettleWaterHeater):
         return self.coordinator.heat_target
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set the heat temperature, and heat to it if the kettle is on.
+        """Set the heat temperature, and change a running Heat to it.
 
-        Unlike the Heat temperature number, turning the dial while the tile
-        shows Heat restarts Heat with the new target, so the running kettle
-        follows the dial. While the kettle is off, the target is only stored,
-        as a thermostat's would be, and the next Heat sends it.
+        Unlike the Heat temperature number, turning the dial while the kettle
+        heats moves where it stops, without restarting Heat. Otherwise the
+        target is only stored, as a thermostat's would be, and the next Heat
+        sends it: in standby writing the target temperature starts heating, and
+        what it does while boiling, cooling down or keeping warm is untested.
         """
-        await self.coordinator.async_set_heat_target(_whole(kwargs[ATTR_TEMPERATURE]))
-        if self.current_operation not in (None, STATE_OFF):
-            await self.coordinator.async_start_heat()
+        temperature = _whole(kwargs[ATTR_TEMPERATURE])
+        if self.current_operation == "heating":
+            await self.coordinator.async_change_heat_target(temperature)
+        else:
+            await self.coordinator.async_set_heat_target(temperature)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self.coordinator.async_start_heat()

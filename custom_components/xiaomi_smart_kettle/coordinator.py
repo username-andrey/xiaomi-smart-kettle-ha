@@ -55,6 +55,14 @@ class KettleCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.kettle.set_heat_target(value)
         self.async_update_listeners()
 
+    async def async_change_heat_target(self, value: int) -> None:
+        """Change the heat target of the running Heat without restarting it."""
+        await self._async_run(
+            self.kettle.change_heat_target,
+            value,
+            written={"target_temperature": value},
+        )
+
     async def async_start_heat(self) -> None:
         await self._async_run(self.kettle.start_heat)
 

@@ -85,7 +85,7 @@ Do not copy the whole repository into `custom_components`, and do not add an ext
 
 After setup, open the kettle device in Home Assistant. Its entities show the current and heat temperature, the status, the keep-warm settings and diagnostic information.
 
-The **Boil**, **Heat** and **Stop** buttons start and stop those modes from Home Assistant. **Heat** heats the water to the heat temperature. Changing the heat temperature on its slider doesn't start the kettle: the new value is sent with the next **Heat**. The Kettle thermostat's dial does the same while the kettle is off, but while it is on (heating, boiling, cooling down or keeping warm) the dial restarts **Heat** with the new temperature. Boiling does not change it, so the next **Heat** after a **Boil** heats to your setting again. Both buttons send the current keep-warm settings along with the command.
+The **Boil**, **Heat** and **Stop** buttons start and stop those modes from Home Assistant. **Heat** heats the water to the heat temperature. Changing the heat temperature on its slider doesn't start the kettle: the new value is sent with the next **Heat**. The Kettle thermostat's dial does the same, except while the kettle is heating: then the kettle switches to the new temperature without restarting. Boiling does not change it, so the next **Heat** after a **Boil** heats to your setting again. Both buttons send the current keep-warm settings along with the command.
 
 The buttons have been confirmed to work on the test device. Try them on your own kettle before using them in automations. Do not run the kettle unattended, and do not bypass its built-in safety mechanisms.
 
@@ -93,7 +93,7 @@ The buttons have been confirmed to work on the test device. Try them on your own
 
 Expose the kettle to Apple Home with Home Assistant's [HomeKit Bridge](https://www.home-assistant.io/integrations/homekit/):
 
-- **Kettle** (`water_heater.…`) appears as a thermostat. The tile shows the water temperature, the dial sets the heat temperature (40–99 °C), **Heat** starts heating and **Off** stops the kettle. Turning the dial while the tile shows **Heat** heats to the new temperature right away; while it shows **Off**, the new temperature is used by the next **Heat**.
+- **Kettle** (`water_heater.…`) appears as a thermostat. The tile shows the water temperature, the dial sets the heat temperature (40–99 °C), **Heat** starts heating and **Off** stops the kettle. Turning the dial while the kettle is heating changes the temperature it stops at, without restarting; otherwise the new temperature is used by the next **Heat**.
 - **Boil** (`button.…_boil`) appears as a switch that turns itself off after it runs.
 - **Keep warm temperature** (`water_heater.…_keep_warm_temperature`) appears as a second thermostat. **Heat** and **Off** turn keep-warm on and off, and the dial sets the keep-warm temperature (40–90 °C). Its tile shows the keep-warm temperature rather than the water temperature, so it's easy to tell apart from the kettle. With it, you don't need to bridge the **Keep warm** switch.
 - **Kettle lifted** (`binary_sensor.…_kettle_lifted`) appears as a contact sensor that is open while the kettle is off its base.

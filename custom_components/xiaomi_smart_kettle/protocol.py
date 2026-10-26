@@ -149,6 +149,16 @@ class Kettle:
         """
         self.heat_target = value
 
+    def change_heat_target(self, value: int) -> None:
+        """Change the temperature a running Heat heats to.
+
+        While the kettle heats, writing only the target temperature changes
+        where it stops without restarting Heat. The kettle keeps the old target
+        in its heat mode settings, which the next Heat overwrites.
+        """
+        self.write({"target_temperature": value})
+        self.heat_target = value
+
     def start_heat(self) -> None:
         """Heat to the heat target with the current keep-warm settings."""
         state = self._read_keep_warm_settings(
