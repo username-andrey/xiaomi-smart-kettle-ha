@@ -13,6 +13,9 @@
     "error": {
       "cannot_connect": "Cannot connect to the kettle. Check IP address and token.",
       "unsupported_model": "The device responded, but it is not xiaomi.kettle.v20."
+    },
+    "abort": {
+      "already_configured": "This kettle is already configured. Its IP address and token have been updated."
     }
   },
   "entity": {
@@ -21,7 +24,14 @@
         "name": "Water temperature"
       },
       "status": {
-        "name": "Status"
+        "name": "Status",
+        "state": {
+          "standby": "Standby",
+          "heating": "Heating",
+          "boiling": "Boiling",
+          "cooling": "Cooling down",
+          "keep_warm": "Keeping warm"
+        }
       },
       "fault": {
         "name": "Fault"
@@ -32,7 +42,11 @@
     },
     "binary_sensor": {
       "kettle_lifting": {
-        "name": "Kettle lifted"
+        "name": "Kettle lifted",
+        "state": {
+          "on": "Lifted",
+          "off": "On base"
+        }
       }
     },
     "switch": {
@@ -43,10 +57,10 @@
         "name": "Remember temperature after lifting"
       },
       "boiling_reminder": {
-        "name": "Boiling reminder"
+        "name": "Boiling notification"
       },
       "keep_warm_reminder": {
-        "name": "Keep-warm reminder"
+        "name": "Keep warm notification"
       },
       "no_disturb": {
         "name": "Do not disturb"
@@ -54,10 +68,7 @@
     },
     "number": {
       "target_temperature": {
-        "name": "Target temperature"
-      },
-      "keep_warm_temperature": {
-        "name": "Keep-warm temperature"
+        "name": "Heat temperature"
       },
       "keep_warm_time": {
         "name": "Keep-warm time"
@@ -73,6 +84,35 @@
       "stop": {
         "name": "Stop"
       }
+    },
+    "water_heater": {
+      "kettle": {
+        "state": {
+          "off": "Off",
+          "heating": "Heating",
+          "boiling": "Boiling",
+          "cooling": "Cooling down",
+          "keep_warm": "Keeping warm"
+        }
+      },
+      "keep_warm": {
+        "name": "Keep warm temperature",
+        "state": {
+          "off": "Off",
+          "on": "On"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_communicate": {
+      "message": "Cannot reach the kettle at {host}: {error}"
+    },
+    "command_rejected": {
+      "message": "The kettle rejected the command: {result}"
+    },
+    "state_unknown": {
+      "message": "The kettle did not report {properties}. Try again in a few seconds."
     }
   }
 }

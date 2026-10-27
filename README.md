@@ -1,136 +1,172 @@
-# Xiaomi Smart Kettle 2 Pro для Home Assistant
+# Xiaomi Smart Kettle 2 Pro for Home Assistant
+
+**English** | [Русский](README.ru.md)
 
 [![GitHub release](https://img.shields.io/github/v/release/username-andrey/xiaomi-smart-kettle-ha)](https://github.com/username-andrey/xiaomi-smart-kettle-ha/releases)
 [![GitHub issues](https://img.shields.io/github/issues/username-andrey/xiaomi-smart-kettle-ha)](https://github.com/username-andrey/xiaomi-smart-kettle-ha/issues)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-blue)](https://www.hacs.xyz/)
 
-**Xiaomi Smart Kettle 2 Pro** — пользовательская интеграция для [Home Assistant](https://www.home-assistant.io/), предназначенная для отображения состояния и параметров умного чайника Xiaomi Smart Kettle 2 Pro с модельным идентификатором **`xiaomi.kettle.v20`**.
+**Xiaomi Smart Kettle 2 Pro** is a custom [Home Assistant](https://www.home-assistant.io/) integration that shows the state and settings of the Xiaomi Smart Kettle 2 Pro, model ID **`xiaomi.kettle.v20`**, and lets you control it over the local network.
 
 > [!IMPORTANT]
-> Это неофициальный проект. Он не разработан и не поддерживается Xiaomi. Работа подтверждалась на конкретном устройстве; совместимость с другими моделями и прошивками не гарантируется.
+> This is an unofficial project. It is not developed or supported by Xiaomi. It has been confirmed to work on one specific device; compatibility with other models and firmware versions is not guaranteed.
 
-## Возможности
+## Features
 
-Интеграция использует доступные устройству свойства Xiaomi/MiIO. В ходе разработки подтверждено чтение следующих параметров:
+The integration reads the kettle's Xiaomi miIO properties and creates these entities:
 
-| Параметр | Описание |
+| Entity | Description |
 | --- | --- |
-| Текущая температура | Температура воды в чайнике |
-| Целевая температура | Заданная температура нагрева |
-| Состояние устройства | Доступное состояние чайника |
-| Код ошибки | Диагностический код, сообщаемый устройством |
-| Поддержание температуры | Включено или выключено |
-| Температура поддержания | Установленная температура поддержания |
-| Время поддержания | Настроенная продолжительность поддержания |
-| Состояние питания | Значение свойства `on`, возвращаемое устройством |
-| Дополнительные настройки | Напоминания, запоминание температуры после снятия с базы, пользовательская температура регулятора — если поддерживаются установленной версией интеграции |
-| Кипячение | Запуск кипячения кнопкой «Кипятить» |
-| Нагрев | Запуск нагрева кнопкой «Нагреть» |
+| Kettle | Water heater: current water temperature, heat temperature, on starts **Heat**, off presses **Stop**; the state shows heating, boiling, cooling down or keeping warm |
+| Keep warm temperature | Water heater for the keep-warm settings: on/off is the **Keep warm** switch, the target is the keep-warm temperature (40–90 °C); it shows that temperature instead of the water temperature |
+| Water temperature | Current temperature of the water |
+| Heat temperature | Temperature that **Heat** heats to (40–99 °C) |
+| Status | Standby, heating, boiling, cooling down or keeping warm |
+| Fault | Diagnostic code reported by the kettle |
+| Keep warm | Whether the kettle keeps the water warm afterwards |
+| Keep-warm time | How long to keep the water warm (60–1440 min) |
+| Warming time | Warming time reported by the kettle |
+| Kettle lifted | Whether the kettle is off its base |
+| Other settings | Boiling and keep warm notifications in the Mi Home app, remember temperature after lifting, do not disturb |
+| Boil | Button that starts boiling |
+| Heat | Button that heats the water to the heat temperature |
+| Stop | Button that stops heating or boiling |
 
 > [!NOTE]
-> **Кнопки «Кипятить» и «Нагреть» работают** на протестированном Xiaomi Smart Kettle 2 Pro. Фактический набор сущностей и команд может зависеть от версии интеграции и прошивки устройства.
+> **The Boil and Heat buttons work** on the tested Xiaomi Smart Kettle 2 Pro. The exact set of entities and commands may depend on the integration version and the kettle's firmware.
 
-## Совместимость
+## Compatibility
 
-| Компонент | Проверенная конфигурация |
+| Component | Tested configuration |
 | --- | --- |
-| Устройство | Xiaomi Smart Kettle 2 Pro |
-| Модель MiIO | `xiaomi.kettle.v20` |
-| Прошивка тестового устройства | `v2.2.7_0016` |
-| Платформа | Home Assistant (установка через HACS) |
-| Версия проекта | Выпуск `v0.2` использовался в ходе разработки |
+| Device | Xiaomi Smart Kettle 2 Pro |
+| miIO model | `xiaomi.kettle.v20` |
+| Firmware of the test device | `v2.2.7_0016` |
+| Platform | Home Assistant, installed through HACS |
+| Project version | The `v0.2` release was used during development |
 
-Другие модели чайников, включая `yunmi.kettle.*`, не следует считать совместимыми без отдельной проверки: у них могут отличаться протокол и доступные свойства.
+Do not assume other kettle models, including `yunmi.kettle.*`, are compatible without testing them: their protocol and properties may differ.
 
-## Требования
+## Requirements
 
-- Работающий Home Assistant с поддержкой пользовательских интеграций.
-- [HACS](https://www.hacs.xyz/) для рекомендуемого способа установки.
-- Чайник Xiaomi Smart Kettle 2 Pro (`xiaomi.kettle.v20`), подключённый к локальной сети.
-- IP-адрес чайника и действительный токен устройства, если они запрашиваются при настройке.
-- Сетевая доступность чайника с хоста Home Assistant.
+- Home Assistant 2024.11 or newer, with custom integrations enabled.
+- [HACS](https://www.hacs.xyz/) for the recommended installation method.
+- A Xiaomi Smart Kettle 2 Pro (`xiaomi.kettle.v20`) connected to the local network.
+- The kettle's IP address and a valid device token.
+- Network access from the Home Assistant host to the kettle.
 
-## Установка через HACS
+## Installation through HACS
 
-1. Откройте **HACS** в Home Assistant.
-2. В меню выберите **Пользовательские репозитории** (*Custom repositories*).
-3. Добавьте репозиторий:
+1. Open **HACS** in Home Assistant.
+2. From the menu, choose **Custom repositories**.
+3. Add the repository:
 
    ```text
    https://github.com/username-andrey/xiaomi-smart-kettle-ha
    ```
 
-4. Укажите тип **Интеграция** (*Integration*).
-5. Откройте добавленный репозиторий и установите доступную версию.
-6. Перезапустите Home Assistant.
-7. Перейдите в **Настройки → Устройства и службы → Добавить интеграцию** и найдите интеграцию Xiaomi Smart Kettle.
-8. Выполните настройку по подсказкам интерфейса.
+4. Choose the **Integration** type.
+5. Open the added repository and install the available version.
+6. Restart Home Assistant.
+7. Go to **Settings → Devices & services → Add integration** and search for Xiaomi Smart Kettle.
+8. Follow the setup prompts.
 
-> Если репозиторий уже добавлен в HACS, повторно добавлять его не требуется. Названия полей настройки могут отличаться в зависимости от выпуска.
+> If the repository is already in HACS, you don't need to add it again. Field names may differ between releases.
 
-## Ручная установка
+## Manual installation
 
-1. Получите исходные файлы из [репозитория](https://github.com/username-andrey/xiaomi-smart-kettle-ha).
-2. Скопируйте каталог компонента из `custom_components/` репозитория в одноимённый каталог внутри `/config/custom_components/` Home Assistant. Сохраняйте структуру каталогов.
-3. Перезапустите Home Assistant и добавьте интеграцию через **Устройства и службы**.
+1. Get the source files from the [repository](https://github.com/username-andrey/xiaomi-smart-kettle-ha).
+2. Copy the component folder from the repository's `custom_components/` into a folder of the same name inside Home Assistant's `/config/custom_components/`. Keep the folder structure.
+3. Restart Home Assistant and add the integration under **Devices & services**.
 
-Не копируйте весь репозиторий целиком в `custom_components` и не создавайте лишний уровень вложенности.
+Do not copy the whole repository into `custom_components`, and do not add an extra level of nesting.
 
-## Использование
+## Usage
 
-После настройки откройте устройство чайника в Home Assistant. Доступные сущности позволяют отслеживать текущую температуру, целевую температуру, состояние, параметры поддержания тепла и диагностические сведения.
+After setup, open the kettle device in Home Assistant. Its entities show the current and heat temperature, the status, the keep-warm settings and diagnostic information.
 
-Кнопки **«Кипятить»** и **«Нагреть»** позволяют запускать соответствующие режимы с Home Assistant. Их работоспособность подтверждена на тестовом устройстве. Перед использованием команд в автоматизациях проверьте их на своём чайнике. Не запускайте нагрев без присмотра и не обходите штатные защитные механизмы чайника.
+The **Boil**, **Heat** and **Stop** buttons start and stop those modes from Home Assistant. **Heat** heats the water to the heat temperature. Changing the heat temperature on its slider doesn't start the kettle: the new value is sent with the next **Heat**. The Kettle thermostat's dial does the same, except while the kettle is heating: then the kettle switches to the new temperature without restarting. Boiling does not change it, so the next **Heat** after a **Boil** heats to your setting again. Both buttons send the current keep-warm settings along with the command.
 
-## Диагностика
+The buttons have been confirmed to work on the test device. Try them on your own kettle before using them in automations. Do not run the kettle unattended, and do not bypass its built-in safety mechanisms.
 
-### Чайник недоступен
+## Apple Home
 
-- Проверьте, что Home Assistant и чайник имеют сетевую связность.
-- Убедитесь, что IP-адрес чайника не изменился; при необходимости закрепите его в DHCP.
-- Проверьте корректность токена, если он используется.
-- Перезагрузите интеграцию и проверьте журнал Home Assistant.
+Expose the kettle to Apple Home with Home Assistant's [HomeKit Bridge](https://www.home-assistant.io/integrations/homekit/):
 
-### Температура и состояние не обновляются
+- **Kettle** (`water_heater.…`) appears as a thermostat. The tile shows the water temperature, the dial sets the heat temperature (40–99 °C), **Heat** starts heating and **Off** stops the kettle. Turning the dial while the kettle is heating changes the temperature it stops at, without restarting; otherwise the new temperature is used by the next **Heat**.
+- **Boil** (`button.…_boil`) appears as a switch that turns itself off after it runs.
+- **Keep warm temperature** (`water_heater.…_keep_warm_temperature`) appears as a second thermostat. **Heat** and **Off** turn keep-warm on and off, and the dial sets the keep-warm temperature (40–90 °C). Its tile shows the keep-warm temperature rather than the water temperature, so it's easy to tell apart from the kettle. With it, you don't need to bridge the **Keep warm** switch.
+- **Kettle lifted** (`binary_sensor.…_kettle_lifted`) appears as a contact sensor that is open while the kettle is off its base.
 
-- Убедитесь, что устройство отвечает в сети.
-- Проверьте, нет ли ошибок связи в **Настройки → Система → Журналы**.
-- Сверьте идентификатор модели устройства с `xiaomi.kettle.v20`.
+The settings under *Configuration* (notifications, do not disturb, remember temperature after lifting) are left out of the bridge unless you include them explicitly.
 
-### Кнопки «Кипятить» и «Нагреть» не срабатывают
+> [!NOTE]
+> Apple Home has no kettle device type, so the tile shows **Heat** whenever the kettle is heating, boiling, cooling down or keeping warm. The mapping was checked against the HomeKit Bridge of Home Assistant 2026.10. Whether the Home app's dial offers the full 40–99 °C range has not been checked on an iPhone yet.
+>
+> The bridge gives every thermostat a 0.1° step, so the Home app's dial can stop on half degrees such as 72.5°. The kettle only takes whole degrees: the integration rounds halves up (72.5° becomes 73°), and the tile shows the rounded temperature right away.
 
-На тестовом устройстве обе кнопки работают. Если команда не выполняется, проверьте связь Home Assistant с чайником, состояние устройства, наличие воды и журнал интеграции. Не отправляйте команды многократно при наличии ошибки чайника.
+## Troubleshooting
 
-### Ошибка `E2`
+### The kettle is unavailable
 
-Ошибка `E2` означает **низкий уровень воды в чайнике**. Она наблюдалась во время испытания кипячения и не свидетельствует сама по себе о неисправности интеграции. При появлении ошибки прекратите нагрев, дайте чайнику остыть при необходимости и проверьте уровень воды, соблюдая отметки MIN/MAX и инструкцию производителя.
+- Check that Home Assistant and the kettle can reach each other over the network.
+- Make sure the kettle's IP address has not changed; reserve it in DHCP if needed.
+- Check that the token is correct.
+- Reload the integration and check the Home Assistant log.
 
-## Безопасность и конфиденциальность
+### Temperature and status do not update
 
-- **Не публикуйте** IP-адреса частной сети вместе с токенами устройства, пароли, журналы с секретами и файлы конфигурации, содержащие учётные данные.
-- Не добавляйте действительные токены в Git, Issues или скриншоты.
-- Предоставляйте доступ к Home Assistant только доверенным пользователям.
-- Обновляйте Home Assistant и интеграцию, предварительно создавая резервную копию.
-- Считайте команды нагрева потенциально опасными: это управление электроприбором, способным нагревать воду.
+- Make sure the kettle responds on the network.
+- Look for communication errors under **Settings → System → Logs**.
+- Check that the device's model ID is `xiaomi.kettle.v20`.
 
-## Обновление и удаление
+### The Boil and Heat buttons do nothing
 
-Для обновления откройте интеграцию в **HACS**, установите доступный выпуск и при необходимости перезапустите Home Assistant. Перед крупными обновлениями создавайте резервную копию.
+Both buttons work on the test device. If a command fails, Home Assistant shows the reason. Check the connection between Home Assistant and the kettle, the kettle's state, the water level and the integration log. Do not send commands repeatedly while the kettle reports a fault.
 
-Для удаления сначала удалите запись интеграции в **Настройки → Устройства и службы**, затем удалите компонент через **HACS**. При ручной установке дополнительно удалите только каталог соответствующего компонента из `/config/custom_components/`.
+### Error `E2`
 
-## Сообщения об ошибках и предложения
+`E2` means **the water level in the kettle is low**. It was seen during a boiling test and does not by itself indicate a problem with the integration. If it appears, stop heating, let the kettle cool down if needed, and check the water level, following the MIN/MAX marks and the manufacturer's instructions.
 
-Создавайте обращения в [GitHub Issues](https://github.com/username-andrey/xiaomi-smart-kettle-ha/issues). Укажите версию Home Assistant, версию интеграции, модель и прошивку чайника, шаги воспроизведения и обезличенный фрагмент журнала. **Удалите токены и другие секреты перед публикацией.**
+## Security and privacy
 
-## Статус проекта
+- **Do not publish** private network IP addresses together with device tokens, passwords, logs containing secrets, or configuration files with credentials.
+- Do not add real tokens to Git, issues or screenshots.
+- Give access to Home Assistant only to trusted users.
+- Back up before updating Home Assistant or the integration.
+- Treat heating commands as potentially dangerous: they control an appliance that heats water.
 
-Интеграция находится в разработке. На тестовом устройстве подтверждены чтение основных параметров и работа кнопок **«Кипятить»** и **«Нагреть»**. Совместимость с другими прошивками и моделями требует отдельной проверки.
+## Updating and removal
 
-## Лицензия
+To update, open the integration in **HACS**, install the available release and restart Home Assistant if asked. Back up before major updates.
 
-Условия использования определяются файлом `LICENSE` в репозитории, если он присутствует. Перед публичным распространением убедитесь, что лицензия выбрана и опубликована.
+To remove it, first delete the integration entry under **Settings → Devices & services**, then remove the component through **HACS**. After a manual installation, also delete only the component's folder from `/config/custom_components/`.
 
-## Отказ от ответственности
+## Bug reports and suggestions
 
-Проект предоставляется «как есть», без гарантий совместимости и бесперебойной работы. Названия Xiaomi, Mi Home и Home Assistant принадлежат их правообладателям. Это неофициальная интеграция.
+Open an issue in [GitHub Issues](https://github.com/username-andrey/xiaomi-smart-kettle-ha/issues). Include your Home Assistant version, the integration version, the kettle's model and firmware, steps to reproduce and an anonymized log excerpt. **Remove tokens and other secrets before posting.**
+
+## Development
+
+The tests use [pytest-homeassistant-custom-component](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component) and a fake kettle, so they need neither a real device nor a running Home Assistant:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements_test.txt
+.venv/bin/ruff format --check . && .venv/bin/ruff check .
+.venv/bin/pytest
+```
+
+Everything that depends on the kettle's MIoT spec, such as property addresses and command payloads, lives in `custom_components/xiaomi_smart_kettle/protocol.py`.
+
+## Project status
+
+The integration is under development. Reading the main values and the **Boil** and **Heat** buttons have been confirmed on the test device. Other firmware versions and models need separate testing.
+
+## License
+
+The project is licensed under the MIT License; see [`LICENSE`](LICENSE).
+
+## Disclaimer
+
+The project is provided "as is", without any guarantee of compatibility or uninterrupted operation. Xiaomi, Mi Home and Home Assistant are trademarks of their respective owners. This is an unofficial integration.

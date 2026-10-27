@@ -1,0 +1,238 @@
+"""MIoT protocol of the Xiaomi Smart Kettle 2 Pro (xiaomi.kettle.v20).
+
+Everything that depends on the device spec lives here: property and action
+addresses, and the payloads of the kettle commands. Spec:
+https://home.miot-spec.com/spec/xiaomi.kettle.v20
+
+The kettle is reached through a ``send(method, params)`` callable, so this module
+needs neither Home Assistant nor a real device to be tested.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Iterable, Mapping
+from threading import Lock
+from typing import Any
+
+type Send = Callable[[str, Any], Any]
+
+MODEL = "xiaomi.kettle.v20"
+
+# name -> (siid, piid), for the properties this integration reads or writes
+PROPERTIES: dict[str, tuple[int, int]] = {
+    "status": (2, 1),
+    "fault": (2, 2),
+    "temperature": (2, 3),
+    "target_temperature": (2, 4),
+    "auto_keep_warm": (2, 5),
+    "keep_warm_temperature": (2, 6),
+    "keep_warm_time": (3, 1),
+    "lift_remember_temp": (3, 4),
+    "boiling_reminder": (3, 5),
+    "keep_warm_reminder": (3, 6),
+    "kettle_lifting": (3, 7),
+    "warming_time": (3, 10),
+    "target_mode": (3, 11),
+    "heat_mode": (3, 12),
+    "boil_mode": (3, 13),
+    "no_disturb": (6, 1),
+}
+# Properties the entities show, plus target_mode and heat_mode, which tell the
+# heat target apart from Boil's 99 °C. boil_mode is only written.
+POLLED = (
+    "status",
+    "fault",
+    "temperature",
+    "target_temperature",
+    "auto_keep_warm",
+    "keep_warm_temperature",
+    "keep_warm_time",
+    "lift_remember_temp",
+    "boiling_reminder",
+    "keep_warm_reminder",
+    "kettle_lifting",
+    "warming_time",
+    "target_mode",
+    "heat_mode",
+    "no_disturb",
+)
+READ_BATCH_SIZE = 5
+# Properties Heat and Boil send back to the kettle unchanged
+KEEP_WARM_SETTINGS = ("auto_keep_warm", "keep_warm_temperature", "keep_warm_time")
+
+STOP_WORK = (3, 1)  # (siid, aiid)
+
+STATUSES = {0: "standby", 1: "heating", 2: "boiling", 3: "cooling", 4: "keep_warm"}
+
+# Range of target-temperature (2.4), which is the heat target outside boil mode
+HEAT_TEMPERATURE_MIN = 40
+HEAT_TEMPERATURE_MAX = 99
+# Keep-warm temperature (2.6) range the Mi Home app allows; the spec allows 0-100
+KEEP_WARM_TEMPERATURE_MIN = 40
+KEEP_WARM_TEMPERATURE_MAX = 90
+
+HEAT_TARGET_MODE = 0
+BOIL_TARGET_MODE = 1
+BOIL_TEMPERATURE = 99
+
+
+class KettleError(Exception):
+    """A kettle request could not be completed."""
+
+
+class KettleRejectedError(KettleError):
+    """The kettle answered a request with an error code."""
+
+    def __init__(self, request: str, result: Any) -> None:
+        super().__init__(f"Kettle rejected {request}: {result}")
+        self.result = result
+
+
+class KettleStateError(KettleError):
+    """The kettle did not report properties a command needs."""
+
+    def __init__(self, missing: list[str]) -> None:
+        super().__init__(f"Kettle did not report {', '.join(missing)}")
+        self.missing = missing
+
+
+class Kettle:
+    """Reads and controls one kettle."""
+
+    def __init__(self, send: Send) -> None:
+        self._send = send
+        # python-miio tracks message IDs per device without locking, so two
+        # requests in flight at once can reuse an ID and time out.
+        self._lock = Lock()
+        self.heat_target: int | None = None
+        # Last target temperature the kettle reported, to notice changes made
+        # outside Home Assistant
+        self._reported_target: Any = None
+
+    def read(self, names: Iterable[str] = POLLED) -> dict[str, Any]:
+        """Read properties by name, leaving out those the kettle fails to report."""
+        names = list(names)
+        values: dict[str, Any] = {}
+        for start in range(0, len(names), READ_BATCH_SIZE):
+            batch = names[start : start + READ_BATCH_SIZE]
+            request = [{"did": name, **_address(name)} for name in batch]
+            for item in self._request("get_properties", request):
+                if item.get("code") == 0:
+                    values[item["did"]] = item.get("value")
+        self._track_heat_target(values)
+        return values
+
+    def write(self, values: Mapping[str, Any]) -> None:
+        """Write properties by name in one request, in the given order."""
+        payload = []
+        for name, value in values.items():
+            address = _address(name)
+            did = f"{address['siid']}-{address['piid']}"
+            payload.append({"did": did, **address, "value": value})
+        _check(self._request("set_properties", payload), "properties")
+
+    def stop(self) -> None:
+        """Stop heating or boiling."""
+        siid, aiid = STOP_WORK
+        params = {"did": f"action-{siid}-{aiid}", "siid": siid, "aiid": aiid, "in": []}
+        _check(self._request("action", params), f"action {siid}.{aiid}")
+
+    def _request(self, method: str, params: Any) -> Any:
+        with self._lock:
+            return self._send(method, params)
+
+    def set_heat_target(self, value: int) -> None:
+        """Set the temperature Heat heats to.
+
+        Writing the target temperature makes the kettle start heating, so the
+        value is only remembered here and sent with the next Heat.
+        """
+        self.heat_target = value
+
+    def change_heat_target(self, value: int) -> None:
+        """Change the temperature a running Heat heats to.
+
+        While the kettle heats, writing only the target temperature changes
+        where it stops without restarting Heat. The kettle keeps the old target
+        in its heat mode settings, which the next Heat overwrites.
+        """
+        self.write({"target_temperature": value})
+        self.heat_target = value
+
+    def start_heat(self) -> None:
+        """Heat to the heat target with the current keep-warm settings."""
+        state = self._read_keep_warm_settings(
+            "target_temperature", "target_mode", "heat_mode"
+        )
+        if self.heat_target is None:
+            raise KettleStateError(["target_temperature"])
+        self._start(state, self.heat_target, HEAT_TARGET_MODE, "heat_mode")
+
+    def start_boil(self) -> None:
+        """Boil with the current keep-warm settings."""
+        state = self._read_keep_warm_settings()
+        self._start(state, BOIL_TEMPERATURE, BOIL_TARGET_MODE, "boil_mode")
+
+    def _read_keep_warm_settings(self, *extra: str) -> dict[str, Any]:
+        """Read the keep-warm settings Heat and Boil resend, fresh from the kettle.
+
+        A cached poll can be seconds old and would undo a change made in the
+        Mi Home app or on the kettle in the meantime.
+        """
+        state = self.read((*extra, *KEEP_WARM_SETTINGS))
+        missing = [name for name in KEEP_WARM_SETTINGS if state.get(name) is None]
+        if missing:
+            raise KettleStateError(missing)
+        return state
+
+    def _track_heat_target(self, values: Mapping[str, Any]) -> None:
+        """Remember the temperature Heat heats to.
+
+        The heat target changes when it is set here, or when the kettle reports
+        a new target temperature in heat mode, e.g. after heating from the Mi
+        Home app. Boil sets the target temperature to 99 °C, which is not a heat
+        target, so changes in boil mode are ignored. After a restart in boil
+        mode, take the target in the heat mode settings.
+        """
+        target = values.get("target_temperature")
+        if target is not None and target != self._reported_target:
+            self._reported_target = target
+            if values.get("target_mode") != BOIL_TARGET_MODE:
+                self.heat_target = int(target)
+        if self.heat_target is None:
+            self.heat_target = _mode_target(values.get("heat_mode"))
+
+    def _start(
+        self, state: Mapping[str, Any], target: int, target_mode: int, mode: str
+    ) -> None:
+        keep_warm = bool(state["auto_keep_warm"])
+        keep_temp = int(state["keep_warm_temperature"])
+        keep_time = int(state["keep_warm_time"])
+        self.write(
+            {
+                "target_temperature": target,
+                "auto_keep_warm": keep_warm,
+                "keep_warm_temperature": keep_temp,
+                "keep_warm_time": keep_time,
+                "target_mode": target_mode,
+                mode: f"{target},{int(keep_warm)},{keep_temp},{keep_time}",
+            }
+        )
+
+
+def _address(name: str) -> dict[str, int]:
+    siid, piid = PROPERTIES[name]
+    return {"siid": siid, "piid": piid}
+
+
+def _mode_target(mode: Any) -> int | None:
+    """Return the target of a "target,keep_warm,keep_warm_temp,keep_warm_time" mode."""
+    target = mode.split(",")[0] if isinstance(mode, str) else ""
+    return int(target) if target.isdigit() else None
+
+
+def _check(result: Any, what: str) -> None:
+    """Raise unless every item of a miIO result reports code 0."""
+    items = result if isinstance(result, list) else [result]
+    if not items or any(not isinstance(i, dict) or i.get("code") != 0 for i in items):
+        raise KettleRejectedError(what, result)

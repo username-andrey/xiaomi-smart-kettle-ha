@@ -13,6 +13,9 @@
     "error": {
       "cannot_connect": "Не удалось подключиться к чайнику. Проверьте IP-адрес и token.",
       "unsupported_model": "Устройство отвечает, но его модель отличается от xiaomi.kettle.v20."
+    },
+    "abort": {
+      "already_configured": "Этот чайник уже настроен. Его IP-адрес и token обновлены."
     }
   },
   "entity": {
@@ -21,7 +24,14 @@
         "name": "Температура воды"
       },
       "status": {
-        "name": "Состояние"
+        "name": "Состояние",
+        "state": {
+          "standby": "Ожидание",
+          "heating": "Нагрев",
+          "boiling": "Кипячение",
+          "cooling": "Остывание",
+          "keep_warm": "Поддержание температуры"
+        }
       },
       "fault": {
         "name": "Ошибка"
@@ -32,7 +42,11 @@
     },
     "binary_sensor": {
       "kettle_lifting": {
-        "name": "Чайник снят с базы"
+        "name": "Чайник снят с базы",
+        "state": {
+          "on": "Снят",
+          "off": "На базе"
+        }
       }
     },
     "switch": {
@@ -43,10 +57,10 @@
         "name": "Запоминать температуру после снятия"
       },
       "boiling_reminder": {
-        "name": "Сигнал кипячения"
+        "name": "Уведомление о кипячении"
       },
       "keep_warm_reminder": {
-        "name": "Сигнал поддержания"
+        "name": "Уведомление о поддержании температуры"
       },
       "no_disturb": {
         "name": "Не беспокоить"
@@ -54,10 +68,7 @@
     },
     "number": {
       "target_temperature": {
-        "name": "Целевая температура"
-      },
-      "keep_warm_temperature": {
-        "name": "Температура поддержания"
+        "name": "Температура нагрева"
       },
       "keep_warm_time": {
         "name": "Время поддержания"
@@ -73,6 +84,35 @@
       "stop": {
         "name": "Остановить"
       }
+    },
+    "water_heater": {
+      "kettle": {
+        "state": {
+          "off": "Выключен",
+          "heating": "Нагрев",
+          "boiling": "Кипячение",
+          "cooling": "Остывание",
+          "keep_warm": "Поддержание температуры"
+        }
+      },
+      "keep_warm": {
+        "name": "Температура поддержания",
+        "state": {
+          "off": "Выкл.",
+          "on": "Вкл."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_communicate": {
+      "message": "Не удалось связаться с чайником {host}: {error}"
+    },
+    "command_rejected": {
+      "message": "Чайник отклонил команду: {result}"
+    },
+    "state_unknown": {
+      "message": "Чайник не сообщил значения {properties}. Повторите попытку через несколько секунд."
     }
   }
 }
